@@ -9,6 +9,8 @@ const { fsOperation } = acode;
 Sass.setWorkerUrl(new URL('sass.js/dist/sass.worker.js', import.meta.url));
 class AcodePlugin {
   $page;
+  #count = 0;
+
   constructor() {
     if (!appSettings.value[plugin.id]) {
       appSettings.value[plugin.id] = {
@@ -101,6 +103,19 @@ class AcodePlugin {
             await cssfs.writeFile(res.text);
           }
           sass.destroy();
+
+          ++this.#count;
+          if (this.#count === 9) {
+            window.toast('Ad comming up.');
+          }
+
+          if (IS_FREE_VERSION && this.#count === 10) {
+            this.#count = 1;
+            if (!await window.iad?.isLoaded()) {
+              await window.iad?.load();
+            }
+            window.iad?.show();
+          }
         });
       });
     } catch (error) {

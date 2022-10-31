@@ -1,6 +1,6 @@
 # SASS compiler
 
-This plugin compile scss to css on file save.
+This plugin compile scss to css on file save. **Note**, this plugin is monetized with ads in _free version_ of the app.
 
 ## Ignore file
 

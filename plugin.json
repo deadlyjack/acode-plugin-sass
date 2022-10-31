@@ -1,17 +1,20 @@
 {
   "id": "acode.plugin.sass",
   "name": "Live SASS",
-  "type": "pro",
+  "type": "freemium",
   "main": "dist/main.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "readme": "readme.md",
   "icon": "icon.png",
   "files": [
-    "7ab53a38be8d6aa4e715.js"
+    "7ab53a38be8d6aa4e715.js",
+    "382316b7268260cd9ead.js",
+    "7ab53a38be8d6aa4e715.js.LICENSE.txt",
+    "main.js.LICENSE.txt"
   ],
   "author": {
-    "name": "Ajit Kumar",
-    "email": "me@ajitkumar.dev",
+    "name": "Acode",
+    "email": "acode@foxdebug.com",
     "github": "https://github.com/deadlyjack"
   }
 }
