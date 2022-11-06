@@ -1,7 +1,7 @@
 {
   "name": "acode-plugin-sass",
-  "version": "1.0.1",
-  "description": "SASS compiler for acode.",
+  "version": "1.0.2",
+  "description": "SASS compiler for Acode.",
   "main": "dist/main.js",
   "repository": "https://github.com/deadlyjack/acode-plugin.git",
   "author": "Ajit <me@ajitkumar.dev>",
