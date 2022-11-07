@@ -9,14 +9,14 @@ const { fsOperation } = acode;
 Sass.setWorkerUrl(new URL('sass.js/dist/sass.worker.js', import.meta.url));
 class AcodePlugin {
   $page;
-  #count = 0;
+  #saveCount = 0;
 
   constructor() {
     if (!appSettings.value[plugin.id]) {
       appSettings.value[plugin.id] = {
         outputDir: '',
         watch: true,
-        style: 'nested',
+        style: 'expanded',
         precision: -1,
         indent: '  ',
         comments: false,
@@ -59,65 +59,68 @@ class AcodePlugin {
       const settings = appSettings.value[plugin.id];
       let indentedSyntax = false;
       if (/\.sass$/.test(name)) indentedSyntax = true;
-      sass.options({
-        style: Sass.style[settings.style],
-        precision: settings.precision,
-        comments: settings.comments,
-        indent: settings.indent,
-        linefeed: settings.linefeed,
-        sourceMapContents: settings.sourceMapContents,
-        sourceMapEmbed: settings.sourceMapEmbed,
-        sourceMapOmitUrl: settings.sourceMapOmitUrl,
-        indentedSyntax,
-      }, () => {
-        sass.importer(async (req, res) => {
-          if (!req.current) return;
-          const file = Url.join(location, req.current);
-          const text = await fsOperation(file).readFile('utf8');
-          res({
-            content: text,
+      sass.options(
+        {
+          style: Sass.style[settings.style],
+          precision: settings.precision,
+          comments: settings.comments,
+          indent: settings.indent,
+          linefeed: settings.linefeed,
+          sourceMapContents: settings.sourceMapContents,
+          sourceMapEmbed: settings.sourceMapEmbed,
+          sourceMapOmitUrl: settings.sourceMapOmitUrl,
+          indentedSyntax,
+        },
+        () => {
+          sass.importer(async (req, res) => {
+            if (!req.current) return;
+            const file = Url.join(location, req.current);
+            const text = await fsOperation(file).readFile('utf8');
+            res({
+              content: text,
+            });
           });
-        });
 
-        sass.compile(text, async (res) => {
-          const cssname = file.name.replace(/scss$/, 'css');
-          let css = Url.join(file.location, cssname);
+          sass.compile(text, async (res) => {
+            const cssname = file.name.replace(/scss$/, 'css');
+            let css = Url.join(file.location, cssname);
 
-          if (settings.outputDir) {
-            css = Url.join(file.location, settings.outputDir, cssname);
-          }
-
-          const cssfs = fsOperation(css);
-
-          if (res.status) {
-            toast(res.message);
-          }
-
-          if (res.text) {
-            if (!await cssfs.exists()) {
-              await this.createFileRecursive(
-                file.location,
-                Path.join(settings.outputDir, cssname),
-              );
+            if (settings.outputDir) {
+              css = Url.join(file.location, settings.outputDir, cssname);
             }
-            await cssfs.writeFile(res.text);
-          }
-          sass.destroy();
 
-          ++this.#count;
-          if (this.#count === 9) {
-            window.toast('Ad comming up.');
-          }
+            const cssfs = fsOperation(css);
 
-          if (IS_FREE_VERSION && this.#count === 10) {
-            this.#count = 1;
-            if (!await window.iad?.isLoaded()) {
-              await window.iad?.load();
+            if (res.status) {
+              toast(res.message);
             }
-            window.iad?.show();
-          }
-        });
-      });
+
+            if (res.text) {
+              if (!(await cssfs.exists())) {
+                await this.createFileRecursive(file.location, Path.join(settings.outputDir, cssname));
+              }
+              await cssfs.writeFile(res.text);
+            }
+            sass.destroy();
+
+            if (!IS_FREE_VERSION) {
+              return;
+            }
+
+            ++this.#saveCount;
+            if (this.#saveCount === 4) {
+              window.toast('Ad coming up.');
+              this.#saveCount = 0;
+
+              if (!(await window.iad?.isLoaded())) {
+                await window.iad?.load();
+              }
+
+              window.iad?.show();
+            }
+          });
+        }
+      );
     } catch (error) {
       toast('Error occured while compiling ' + name);
     }
@@ -127,7 +130,7 @@ class AcodePlugin {
     if (typeof dir === 'string') {
       dir = dir.split('/');
     }
-    dir = dir.filter(d => d);
+    dir = dir.filter((d) => d);
     const cd = dir.shift();
     const newParent = Url.join(parent, cd);
     if (!(await fsOperation(newParent).exists())) {
