@@ -3,8 +3,9 @@ import plugin from '../plugin.json';
 import Path from './utils/Path';
 import Url from './utils/Url';
 
-const { acode, appSettings } = window;
+const { acode } = window;
 const { fsOperation } = acode;
+const appSettings = acode.require('settings');
 
 Sass.setWorkerUrl(new URL('sass.js/dist/sass.worker.js', import.meta.url));
 class AcodePlugin {
