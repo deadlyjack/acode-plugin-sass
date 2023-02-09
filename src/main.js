@@ -13,27 +13,25 @@ class AcodePlugin {
   #saveCount = 0;
 
   constructor() {
-    if (!appSettings.value[plugin.id]) {
-      appSettings.value[plugin.id] = {
-        outputDir: '',
-        watch: true,
-        style: 'expanded',
-        precision: -1,
-        indent: '  ',
-        comments: false,
-        linefeed: '\n',
-        sourceMapContents: true,
-        sourceMapEmbed: false,
-        sourceMapOmitUrl: true,
-      };
-      appSettings.update();
+    let settingsChanged = false;
+    // traverse all default settings and set if not set or type is different
+    if (!this.settings) {
+      appSettings.value[plugin.id] = {};
     }
-
+    Object.keys(this.defaultSettings).forEach((key) => {
+      const type = typeof this.defaultSettings[key];
+      if (typeof this.settings[key] !== type) {
+        settingsChanged = true;
+        this.settings[key] = this.defaultSettings[key];
+      }
+    });
+    if (settingsChanged) appSettings.update();
     this.compile = this.compile.bind(this);
   }
 
   async init($page) {
     this.$page = $page;
+    $page.settitle(plugin.name);
     editorManager.on('save-file', this.compile);
     editorManager.editor.commands.addCommand({
       name: 'liveSassSettings',
@@ -65,8 +63,8 @@ class AcodePlugin {
           style: Sass.style[settings.style],
           precision: settings.precision,
           comments: settings.comments,
-          indent: settings.indent,
-          linefeed: settings.linefeed,
+          indent: this.indent,
+          linefeed: this.linefeed,
           sourceMapContents: settings.sourceMapContents,
           sourceMapEmbed: settings.sourceMapEmbed,
           sourceMapOmitUrl: settings.sourceMapOmitUrl,
@@ -93,7 +91,14 @@ class AcodePlugin {
             const cssfs = fsOperation(css);
 
             if (res.status) {
-              toast(res.message);
+              this.$page.content = <code
+                style={{
+                  display: 'block',
+                  padding: '10px',
+                  borderBottom: 'solid 1px rgba(255,255,255,0.1)',
+                }}
+              >{res.formatted}</code>;
+              this.$page.show();
             }
 
             if (res.text) {
@@ -171,6 +176,140 @@ class AcodePlugin {
     editorManager.editor.moveCursorTo(row, column);
     editorManager.editor.scrollToRow(row);
   }
+
+  get settingsJson() {
+    const list = [
+      {
+        key: 'outputDir',
+        text: 'Output directory',
+        value: this.settings.outputDir,
+        prompt: 'Output directory',
+        promptType: 'text',
+        promptOptions: {
+          placeholder: 'e.g. css',
+          // should valid folder name
+          match: /^[a-zA-Z0-9-_]+$/,
+        }
+      },
+      {
+        key: 'watch',
+        text: 'Compile on save',
+        checkbox: this.settings.watch,
+      },
+      {
+        key: 'style',
+        text: 'Output style',
+        select: ['nested', 'expanded', 'compact', 'compressed'],
+        value: this.settings.style,
+      },
+      {
+        key: 'precision',
+        text: 'Precision',
+        value: this.settings.precision,
+        prompt: 'Precision',
+        promptType: 'number',
+        promptOptions: {
+          placeholder: 'e.g. 5',
+          // should be a number
+          match: /^[0-9]+$/,
+        },
+      },
+      {
+        key: 'comments',
+        text: 'Include comments',
+        checkbox: this.settings.comments,
+      },
+      {
+        key: 'indent',
+        text: 'Indent type',
+        select: ['space', 'tab'],
+        value: this.settings.indent,
+      },
+      {
+        key: 'indentWidth',
+        text: 'Indent width',
+        value: this.settings.indentWidth,
+        prompt: 'Indent width',
+        promptType: 'number',
+        promptOptions: {
+          placeholder: 'e.g. 2',
+          // should be a number
+          match: /^[0-9]+$/,
+        },
+      },
+      {
+        key: 'linefeed',
+        text: 'Linefeed type',
+        select: ['cr', 'crlf', 'lf', 'lfcr'],
+        value: this.settings.linefeed,
+      },
+      {
+        key: 'sourceMapContents',
+        text: 'Embed source map contents',
+        checkbox: this.settings.sourceMapContents,
+      },
+      {
+        key: 'sourceMapEmbed',
+        text: 'Embed source map',
+        checkbox: this.settings.sourceMapEmbed,
+      },
+      {
+        key: 'sourceMapOmitUrl',
+        text: 'Omit source map url',
+        checkbox: this.settings.sourceMapOmitUrl,
+      }
+    ];
+
+    return {
+      list,
+      cb: (key, value) => {
+        this.settings[key] = value;
+        appSettings.update();
+      },
+    };
+  }
+
+  get indent() {
+    if (this.settings.indent === 'tab') {
+      return '\t';
+    }
+    return ' '.repeat(
+      parseInt(this.settings.indentWidth, 10) || 2
+    );
+  }
+
+  get linefeed() {
+    switch (this.settings.linefeed) {
+      case 'cr':
+        return '\r';
+      case 'crlf':
+        return '\r\n';
+      case 'lfcr':
+        return '\n\r';
+      default:
+        return '\n';
+    }
+  }
+
+  get settings() {
+    return appSettings.value[plugin.id];
+  }
+
+  get defaultSettings() {
+    return {
+      outputDir: '',
+      watch: true,
+      style: 'expanded',
+      precision: -1,
+      indent: 'space',
+      indentWidth: 2,
+      comments: false,
+      linefeed: 'lf',
+      sourceMapContents: true,
+      sourceMapEmbed: false,
+      sourceMapOmitUrl: true,
+    };
+  }
 }
 
 if (window.acode) {
@@ -181,7 +320,7 @@ if (window.acode) {
     }
     acodePlugin.baseUrl = baseUrl;
     acodePlugin.init($page, cacheFile, cacheFileUrl);
-  });
+  }, acodePlugin.settingsJson);
   acode.setPluginUnmount(plugin.id, () => {
     acodePlugin.destroy();
   });
