@@ -2,6 +2,13 @@
 
 This plugin compile scss to css on file save. **Note**, this plugin is monetized with ads in _free version_ of the app.
 
+## Updates
+
+### 1.0.4
+
+- Bug fixes
+- Added settings
+
 ## Ignore file
 
 To prevent file from compiling add `//--ignore-compile` at the top of your scss file.
