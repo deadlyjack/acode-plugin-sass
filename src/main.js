@@ -73,11 +73,17 @@ class AcodePlugin {
         () => {
           sass.importer(async (req, res) => {
             if (!req.current) return;
-            const file = Url.join(location, req.current);
-            const text = await fsOperation(file).readFile('utf8');
-            res({
-              content: text,
-            });
+            try {
+              const file = Url.join(location, req.current);
+              const text = await fsOperation(file).readFile('utf8');
+              res({
+                content: text,
+              });
+            } catch (error) {
+              res({
+                error: `${req.current} not found`,
+              });
+            }
           });
 
           sass.compile(text, async (res) => {
@@ -96,8 +102,12 @@ class AcodePlugin {
                   display: 'block',
                   padding: '10px',
                   borderBottom: 'solid 1px rgba(255,255,255,0.1)',
+                  whiteSpace: 'wrap',
+                  overflow: 'auto',
                 }}
-              >{res.formatted}</code>;
+                innerText={res.formatted}
+              ></code>;
+              window.toast('Error occured while compiling ' + name);
               this.$page.show();
             }
 

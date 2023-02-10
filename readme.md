@@ -4,10 +4,11 @@ This plugin compile scss to css on file save. **Note**, this plugin is monetized
 
 ## Updates
 
-### 1.0.4
+### 1.0.5
 
 - Bug fixes
 - Added settings
+- Fix error reporting
 
 ## Ignore file
 
